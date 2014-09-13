@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title></title>
+  <meta name="description" content="">
+  <meta name="author" content="">
+  <link rel="stylesheet" href="style.css">
+  <script>
+    var scripts = ['main.js'];
+    document.addEventListener('DOMContentLoaded', function() {
+      scripts.forEach(function(e) {
+        var scriptEl = document.createElement('script');
+        scriptEl.src = e;
+        document.head.appendChild(scriptEl);
+      });
+    });
+  </script>
+</head>
+<body>
+  <canvas id="tetris"></canvas>
+</body>
+</html>
