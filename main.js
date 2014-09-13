@@ -494,8 +494,20 @@ var Tetris = function(canvas, rows, columns, squareSize) {
     context.closePath();
   };
 
+  var backgroundColor = '#ebebeb';
+  context.fillStyle = backgroundColor;
+  context.fillRect(0, 0, canvas.width, canvas.height);
   var clearPixel = function(x, y) {
-    context.clearRect(x * squareSize, y * squareSize, squareSize, squareSize);
+    context.fillStyle = backgroundColor;
+    context.fillRect(x * squareSize, y * squareSize, squareSize, squareSize);
+  };
+  var clearRow = function(y) {
+    context.fillStyle = backgroundColor;
+    grid.data[y] = grid.data[y].map(function() { return 0; });
+    grid.data.unshift(grid.data.splice(y, 1)[0]);
+    context.fillRect(0, y * squareSize - squareSize * 2, canvas.width, squareSize);
+    var image = context.getImageData(0, 0, canvas.width, (y - 2) * squareSize);
+    context.putImageData(image, 0, squareSize);
   };
 
   var randomShape = function() {
@@ -522,18 +534,14 @@ var Tetris = function(canvas, rows, columns, squareSize) {
   var clearRows = function() {
     for (var y = grid.data.length - 1; y !== -1; y--) {
       if (grid.data[y].every(function(e) { return e; })) {
-        grid.data[y] = grid.data[y].map(function() { return 0; });
-        grid.data.unshift(grid.data.splice(y, 1)[0]);
-        context.clearRect(0, y * squareSize - squareSize * 2, canvas.width, squareSize);
-        var image = context.getImageData(0, 0, canvas.width, (y - 2) * squareSize);
-        context.putImageData(image, 0, squareSize);
+        clearRow(y);
         return clearRows();
       }
     }
   };
 
   var Animation = (function() {
-    var C = 750;
+    var C = 650;
     var id;
     var left = 0;
     var isAnimating = false;
@@ -590,6 +598,21 @@ var Tetris = function(canvas, rows, columns, squareSize) {
     };
   })();
 
+  var downHeld = false;
+  var advanceLoop = function() {
+    clearShape();
+    Animation.reset();
+    window.setTimeout(function() {
+      if (downHeld) {
+        advanceLoop();
+      }
+    }, 50);
+  };
+  window.addEventListener('keyup', function(event) {
+    if (event.which === 40) {
+      downHeld = false;
+    }
+  });
   window.addEventListener('keydown', function(event) {
     switch (event.which) {
       case 37: // Left
@@ -607,8 +630,10 @@ var Tetris = function(canvas, rows, columns, squareSize) {
         Animation.play();
         break;
       case 40: // Down
-        clearShape();
-        Animation.reset();
+        if (!downHeld) {
+          downHeld = true;
+          advanceLoop();
+        }
         break;
       case 38: // Up
         clearShape();
