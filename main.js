@@ -524,10 +524,8 @@ var Tetris = function(canvas, rows, columns, squareSize) {
       if (grid.data[y].every(function(e) { return e; })) {
         grid.data[y] = grid.data[y].map(function() { return 0; });
         grid.data.unshift(grid.data.splice(y, 1)[0]);
-        for (var x = 0; x < grid.data[y].length; x++) {
-          clearPixel(x, y);
-        }
-        var image = context.getImageData(0, 0, canvas.width, squareSize * y);
+        context.clearRect(0, y * squareSize - squareSize * 2, canvas.width, squareSize);
+        var image = context.getImageData(0, 0, canvas.width, (y - 2) * squareSize);
         context.putImageData(image, 0, squareSize);
         return clearRows();
       }
