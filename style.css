@@ -2,6 +2,16 @@ html, body {
   font-family: Helvetica, 'Helvetica Neue', Neue, sans-serif, Arial;
 }
 
-canvas {
-  border: 1px solid;
+#tetris {
+  left: 0; right: 0;
+  top: 0;
+  margin: 0 auto;
+}
+
+#next-piece {
+  position: absolute;
+}
+
+#infobox {
+  position: absolute;
 }

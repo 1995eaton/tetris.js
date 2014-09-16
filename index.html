@@ -7,7 +7,7 @@
   <meta name="author" content="">
   <link rel="stylesheet" href="style.css">
   <script>
-    var scripts = ['main.js'];
+    var scripts = ['score.js', 'main.js'];
     document.addEventListener('DOMContentLoaded', function() {
       scripts.forEach(function(e) {
         var scriptEl = document.createElement('script');
@@ -19,5 +19,11 @@
 </head>
 <body>
   <canvas id="tetris"></canvas>
+  <canvas id="next-piece"></canvas>
+  <div id="infobox">
+    Score: <span id="score"></span><br>
+    Level: <span id="level"></span><br>
+    Rows Cleared: <span id="rows-cleared"></span>
+  </div>
 </body>
 </html>

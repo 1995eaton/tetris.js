@@ -1,3 +1,49 @@
+var BEVEL = 5;
+var WIDTH = 10;
+var HEIGHT = 20;
+var SIZE = 40;
+
+var putPixel = function(context, size, x, y, color) {
+  context.fillStyle = color;
+  context.fillRect(x * size, y * size, size, size);
+
+  context.beginPath();
+  context.fillStyle = 'rgba(0,0,0,0.25)';
+  context.moveTo(x * size, y * size);
+  context.lineTo(x * size + BEVEL, y * size + BEVEL);
+  context.lineTo(x * size + BEVEL, (y+1) * size - BEVEL);
+  context.lineTo(x * size, (y+1) * size);
+  context.fill();
+  context.closePath();
+
+  context.beginPath();
+  context.fillStyle = 'rgba(255,255,255,0.55)';
+  context.moveTo(x * size, y * size);
+  context.lineTo(x * size + BEVEL, y * size + BEVEL);
+  context.lineTo((x+1) * size - BEVEL, y * size + BEVEL);
+  context.lineTo((x+1) * size, y * size);
+  context.fill();
+  context.closePath();
+
+  context.beginPath();
+  context.fillStyle = 'rgba(0,0,0,0.35)';
+  context.moveTo((x+1) * size, y * size);
+  context.lineTo((x+1) * size - BEVEL, y * size + BEVEL);
+  context.lineTo((x+1) * size - BEVEL, (y+1) * size - BEVEL);
+  context.lineTo((x+1) * size, (y+1) * size);
+  context.fill();
+  context.closePath();
+
+  context.beginPath();
+  context.fillStyle = 'rgba(0,0,0,0.45)';
+  context.moveTo(x * size, (y+1) * size);
+  context.lineTo(x * size + BEVEL, (y+1) * size - BEVEL);
+  context.lineTo((x+1) * size - BEVEL, (y+1) * size - BEVEL);
+  context.lineTo((x+1) * size, (y+1) * size);
+  context.fill();
+  context.closePath();
+};
+
 var TetrisShape = function(shape) {
   this.rotations = shape.rotations;
   this.rotationState = 0;
@@ -441,67 +487,83 @@ var TetrisPieces = {
   },
 };
 
+var NextPiece = function(canvas, width, height, squareSize) {
+  canvas.width = width * squareSize;
+  canvas.height = height * squareSize;
+  var context = canvas.getContext('2d');
+  var randomShape = function() {
+    var keys = Object.keys(TetrisPieces);
+    var shape = TetrisPieces[keys[~~(Math.random() * keys.length)]];
+    return shape;
+  };
+  var nextShape = randomShape();
+  return {
+    render: function() {
+      context.fillStyle = '#fff';
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      var next = new TetrisShape(nextShape);
+      var offsetX = 1;
+      var offsetY = ~~((height - next.height) / 2);
+      next.forEach(function(e, x, y) {
+        if (e === 1) {
+          putPixel(context, squareSize, offsetX + x, offsetY + y, next.color);
+        }
+      });
+    },
+    nextShape: function() {
+      var lastShape = nextShape;
+      nextShape = randomShape();
+      return lastShape;
+    },
+    left: function(x) {
+      canvas.style.left = x + 'px';
+    },
+    top: function(y) {
+      canvas.style.top = y + 'px';
+    }
+  };
+};
+
 var Tetris = function(canvas, rows, columns, squareSize) {
 
 
   var grid = new TetrisGrid(rows, columns);
   var activeShape;
+  var score = 0;
+  var totalRowsCleared = 0;
+  var level = 1;
+
+  var clearPixel,
+      clearRow,
+      randomShape,
+      renderShape,
+      clearShape,
+      clearRows;
+  var Animation;
 
   canvas.width = columns * squareSize;
   canvas.height = rows * squareSize;
+  var next = new NextPiece(document.getElementById('next-piece'), 6, 5, squareSize);
+  next.left(canvas.offsetLeft + canvas.width);
+  next.top(canvas.offsetTop);
+
+  InfoBox.left(canvas.offsetLeft + canvas.width);
+  InfoBox.top(canvas.offsetTop + 5 * squareSize);
+  InfoBox.setScore(0);
+  InfoBox.setLevel(1);
+  InfoBox.setRowsCleared(0);
+
   var context = canvas.getContext('2d');
 
-  var bevel = 5;
 
-  var putPixel = function(x, y, color) {
-    context.fillStyle = color;
-    context.fillRect(x * squareSize, y * squareSize, squareSize, squareSize);
-
-    context.beginPath();
-    context.fillStyle = 'rgba(0,0,0,0.25)';
-    context.moveTo(x * squareSize, y * squareSize);
-    context.lineTo(x * squareSize + bevel, y * squareSize + bevel);
-    context.lineTo(x * squareSize + bevel, (y+1) * squareSize - bevel);
-    context.lineTo(x * squareSize, (y+1) * squareSize);
-    context.fill();
-    context.closePath();
-
-    context.beginPath();
-    context.fillStyle = 'rgba(255,255,255,0.55)';
-    context.moveTo(x * squareSize, y * squareSize);
-    context.lineTo(x * squareSize + bevel, y * squareSize + bevel);
-    context.lineTo((x+1) * squareSize - bevel, y * squareSize + bevel);
-    context.lineTo((x+1) * squareSize, y * squareSize);
-    context.fill();
-    context.closePath();
-
-    context.beginPath();
-    context.fillStyle = 'rgba(0,0,0,0.35)';
-    context.moveTo((x+1) * squareSize, y * squareSize);
-    context.lineTo((x+1) * squareSize - bevel, y * squareSize + bevel);
-    context.lineTo((x+1) * squareSize - bevel, (y+1) * squareSize - bevel);
-    context.lineTo((x+1) * squareSize, (y+1) * squareSize);
-    context.fill();
-    context.closePath();
-
-    context.beginPath();
-    context.fillStyle = 'rgba(0,0,0,0.45)';
-    context.moveTo(x * squareSize, (y+1) * squareSize);
-    context.lineTo(x * squareSize + bevel, (y+1) * squareSize - bevel);
-    context.lineTo((x+1) * squareSize - bevel, (y+1) * squareSize - bevel);
-    context.lineTo((x+1) * squareSize, (y+1) * squareSize);
-    context.fill();
-    context.closePath();
-  };
-
-  var backgroundColor = '#ebebeb';
+  var backgroundColor = '#1b1d1e';
   context.fillStyle = backgroundColor;
   context.fillRect(0, 0, canvas.width, canvas.height);
-  var clearPixel = function(x, y) {
+  clearPixel = function(x, y) {
     context.fillStyle = backgroundColor;
     context.fillRect(x * squareSize, y * squareSize, squareSize, squareSize);
   };
-  var clearRow = function(y) {
+  clearRow = function(y) {
     context.fillStyle = backgroundColor;
     grid.data[y] = grid.data[y].map(function() { return 0; });
     grid.data.unshift(grid.data.splice(y, 1)[0]);
@@ -510,20 +572,19 @@ var Tetris = function(canvas, rows, columns, squareSize) {
     context.putImageData(image, 0, squareSize);
   };
 
-  var randomShape = function() {
-    var keys = Object.keys(TetrisPieces);
-    return TetrisPieces[keys[~~(Math.random() * keys.length)]];
+  randomShape = function() {
+    return [next.nextShape(), next.render()][0];
   };
 
-  var renderShape = function() {
+  renderShape = function() {
     activeShape.forEach(function(e, x, y) {
       if (e === 1) {
-        putPixel(x + activeShape.x, y + activeShape.y - 2, activeShape.color);
+        putPixel(context, squareSize, x + activeShape.x, y + activeShape.y - 2, activeShape.color);
       }
     });
   };
 
-  var clearShape = function() {
+  clearShape = function() {
     activeShape.forEach(function(e, x, y) {
       if (e === 1) {
         clearPixel(x + activeShape.x, y + activeShape.y - 2, activeShape.color);
@@ -531,16 +592,51 @@ var Tetris = function(canvas, rows, columns, squareSize) {
     });
   };
 
-  var clearRows = function() {
-    for (var y = grid.data.length - 1; y !== -1; y--) {
-      if (grid.data[y].every(function(e) { return e; })) {
-        clearRow(y);
-        return clearRows();
+  clearRows = function() {
+    var rowsCleared = 0;
+    while (true) {
+      var hasCleared = false;
+      for (var y = grid.data.length - 1; y !== -1; y--) {
+        if (grid.data[y].every(function(e) { return e; })) {
+          rowsCleared++;
+          clearRow(y);
+          hasCleared = true;
+          break;
+        }
       }
+      if (!hasCleared) {
+        break;
+      }
+    }
+    if (rowsCleared) {
+      var factor;
+      switch (rowsCleared) {
+        case 1:
+          factor = 40;
+          break;
+        case 2:
+          factor = 100;
+          break;
+        case 3:
+          factor = 300;
+          break;
+        case 4:
+          factor = 1200;
+          break;
+      }
+      score += factor * level;
+      totalRowsCleared += rowsCleared;
+      if (totalRowsCleared % 10 === 0) {
+        level++;
+        Animation.speed(50);
+        InfoBox.setLevel(level);
+      }
+      InfoBox.setScore(score);
+      InfoBox.setRowsCleared(totalRowsCleared);
     }
   };
 
-  var Animation = (function() {
+  Animation = (function() {
     var C = 650;
     var id;
     var left = 0;
@@ -591,6 +687,11 @@ var Tetris = function(canvas, rows, columns, squareSize) {
         }
         isAnimating = true;
         id = window.setInterval(animate, C);
+      },
+      speed: function(n) {
+        C -= n;
+        pause();
+        play();
       },
       pause: pause,
       play: play,
@@ -650,4 +751,4 @@ var Tetris = function(canvas, rows, columns, squareSize) {
 
 };
 
-Tetris(document.getElementById('tetris'), 20, 10, 40);
+Tetris(document.getElementById('tetris'), HEIGHT, WIDTH, SIZE);
