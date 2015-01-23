@@ -1,7 +1,7 @@
-var BEVEL = 5;
-var WIDTH = 10;
+var BEVEL  = 5;
+var WIDTH  = 10;
 var HEIGHT = 20;
-var SIZE = 40;
+var SIZE   = ~~(window.innerHeight / HEIGHT * 0.9);
 
 var putPixel = function(context, size, x, y, color) {
   context.fillStyle = color;
@@ -11,8 +11,8 @@ var putPixel = function(context, size, x, y, color) {
   context.fillStyle = 'rgba(0,0,0,0.25)';
   context.moveTo(x * size, y * size);
   context.lineTo(x * size + BEVEL, y * size + BEVEL);
-  context.lineTo(x * size + BEVEL, (y+1) * size - BEVEL);
-  context.lineTo(x * size, (y+1) * size);
+  context.lineTo(x * size + BEVEL, (y + 1) * size - BEVEL);
+  context.lineTo(x * size, (y + 1) * size);
   context.fill();
   context.closePath();
 
@@ -20,26 +20,26 @@ var putPixel = function(context, size, x, y, color) {
   context.fillStyle = 'rgba(255,255,255,0.55)';
   context.moveTo(x * size, y * size);
   context.lineTo(x * size + BEVEL, y * size + BEVEL);
-  context.lineTo((x+1) * size - BEVEL, y * size + BEVEL);
-  context.lineTo((x+1) * size, y * size);
+  context.lineTo((x + 1) * size - BEVEL, y * size + BEVEL);
+  context.lineTo((x + 1) * size, y * size);
   context.fill();
   context.closePath();
 
   context.beginPath();
   context.fillStyle = 'rgba(0,0,0,0.35)';
-  context.moveTo((x+1) * size, y * size);
-  context.lineTo((x+1) * size - BEVEL, y * size + BEVEL);
-  context.lineTo((x+1) * size - BEVEL, (y+1) * size - BEVEL);
-  context.lineTo((x+1) * size, (y+1) * size);
+  context.moveTo((x + 1) * size, y * size);
+  context.lineTo((x + 1) * size - BEVEL, y * size + BEVEL);
+  context.lineTo((x + 1) * size - BEVEL, (y + 1) * size - BEVEL);
+  context.lineTo((x + 1) * size, (y + 1) * size);
   context.fill();
   context.closePath();
 
   context.beginPath();
   context.fillStyle = 'rgba(0,0,0,0.45)';
-  context.moveTo(x * size, (y+1) * size);
-  context.lineTo(x * size + BEVEL, (y+1) * size - BEVEL);
-  context.lineTo((x+1) * size - BEVEL, (y+1) * size - BEVEL);
-  context.lineTo((x+1) * size, (y+1) * size);
+  context.moveTo(x * size, (y + 1) * size);
+  context.lineTo(x * size + BEVEL, (y + 1) * size - BEVEL);
+  context.lineTo((x + 1) * size - BEVEL, (y + 1) * size - BEVEL);
+  context.lineTo((x + 1) * size, (y + 1) * size);
   context.fill();
   context.closePath();
 };
@@ -51,26 +51,26 @@ var TetrisShape = function(shape) {
   this.x = shape.x;
   this.y = 0;
   this.height = this.rotations[this.rotationState].height;
-  this.width = this.rotations[this.rotationState].width;
-  this.color = shape.color;
+  this.width  = this.rotations[this.rotationState].width;
+  this.color  = shape.color;
 };
 
 TetrisShape.prototype = {
   rotr: function() {
     this.rotationState++;
     this.rotationState %= this.rotations.length;
-    this.data = this.rotations[this.rotationState].data;
+    this.data   = this.rotations[this.rotationState].data;
     this.height = this.rotations[this.rotationState].height;
-    this.width = this.rotations[this.rotationState].width;
+    this.width  = this.rotations[this.rotationState].width;
   },
   rotl: function() {
     this.rotationState--;
     if (this.rotationState < 0) {
       this.rotationState = this.rotations.length - 1;
     }
-    this.data = this.rotations[this.rotationState].data;
+    this.data   = this.rotations[this.rotationState].data;
     this.height = this.rotations[this.rotationState].height;
-    this.width = this.rotations[this.rotationState].width;
+    this.width  = this.rotations[this.rotationState].width;
   },
   forEach: function(FN, caller) {
     FN = caller ? FN.bind(caller) : FN;
@@ -85,17 +85,17 @@ TetrisShape.prototype = {
 var TetrisGrid = function(rows, columns) {
   this.width = columns;
   this.height = rows + 2;
-  this.data = Array.apply(null, new Array(rows + 2));
-  this.data = this.data.map(function() {
-    return Array.apply(null, new Array(columns))
-      .map(function() { return 0; });
-  });
+  this.data = Array.apply(null, new Array(rows + 2))
+    .map(function() {
+      return Array.apply(null, new Array(columns))
+        .map(function() { return 0; });
+    });
   this.activeShape = null;
 };
 
 TetrisGrid.prototype = {
   dropShape: function(shape) {
-    shape.x = ~~(this.width / 2 - shape.width / 2);
+    shape.x = ~~(this.width / 2 - shape.dimensions / 2);
     this.renderShape(this.activeShape = new TetrisShape(shape));
     return this.activeShape;
   },
@@ -114,7 +114,7 @@ TetrisGrid.prototype = {
     }, this);
   },
   hasXConflict: function(shape, dx) {
-    if (shape.x + shape.width === this.width && dx === 1) {
+    if (shape.x + shape.dimensions === this.width && dx === 1) {
       return true;
     }
     var y, x;
@@ -144,13 +144,14 @@ TetrisGrid.prototype = {
     return false;
   },
   hasYConflict: function(shape, dy) {
-    if (shape.y + shape.height === this.height) {
+    if (shape.y + shape.dimensions === this.height) {
       return true;
     }
     for (var y = 0; y < shape.data.length; y++) {
       for (var x = 0; x < shape.data[0].length; x++) {
         if (shape.data[y][x] === 1) {
-          if (!this.data[y + shape.y + dy] || this.data[y + shape.y + dy][x + shape.x] !== 0) {
+          if (!this.data[y + shape.y + dy] ||
+              this.data[y + shape.y + dy][x + shape.x] !== 0) {
             return true;
           }
         }
@@ -159,15 +160,16 @@ TetrisGrid.prototype = {
     return false;
   },
   hasRotationConflict: function(shape) {
-    if ((shape.x < 0 || shape.x + shape.width > this.width) ||
-        (shape.y < 0 || shape.y + shape.height > this.height))
+    if ((shape.x < 0 || shape.x + shape.dimensions > this.width) ||
+        (shape.y < 0 || shape.y + shape.dimensions > this.height))
     {
       return true;
     }
     for (var y = 0; y < shape.data.length; y++) {
       for (var x = 0; x < shape.data[0].length; x++) {
         if (shape.data[y][x] === 1) {
-          if (!this.data[shape.y + y] || this.data[shape.y + y][shape.x + x] !== 0) {
+          if (!this.data[shape.y + y] ||
+              this.data[shape.y + y][shape.x + x] !== 0) {
             return true;
           }
         }
@@ -208,284 +210,69 @@ TetrisGrid.prototype = {
 
 var TetrisPieces = {
   I: {
-    rotations: [
-      {
-        data: [
-          [0, 0, 0, 0],
-          [1, 1, 1, 1],
-          [0, 0, 0, 0],
-          [0, 0, 0, 0]
-        ],
-        width: 4,
-        height: 1
-      },
-      {
-        data: [
-          [0, 0, 1, 0],
-          [0, 0, 1, 0],
-          [0, 0, 1, 0],
-          [0, 0, 1, 0]
-        ],
-        width: 1,
-        height: 4
-      },
-      {
-        data: [
-          [0, 0, 0, 0],
-          [0, 0, 0, 0],
-          [1, 1, 1, 1],
-          [0, 0, 0, 0]
-        ],
-        width: 4,
-        height: 1
-      },
-      {
-        data: [
-          [0, 1, 0, 0],
-          [0, 1, 0, 0],
-          [0, 1, 0, 0],
-          [0, 1, 0, 0]
-        ],
-        width: 1,
-        height: 4
-      },
-    ],
-    width: 4,
-    height: 4,
-    color: '#00f0f0'
+    rotations: [ 0xf00, 0x2222, 0xf0, 0x4444 ],
+    dimensions: 4,
+    color: '#00f0f0',
   },
   J: {
-    rotations: [
-      {
-        data: [
-          [1, 0, 0],
-          [1, 1, 1],
-          [0, 0, 0]
-        ],
-        width: 3,
-        height: 2
-      },
-      {
-        data: [
-          [0, 1, 1],
-          [0, 1, 0],
-          [0, 1, 0]
-        ],
-        width: 2,
-        height: 3
-      },
-      {
-        data: [
-          [0, 0, 0],
-          [1, 1, 1],
-          [0, 0, 1]
-        ],
-        width: 3,
-        height: 2
-      },
-      {
-        data: [
-          [0, 1, 0],
-          [0, 1, 0],
-          [1, 1, 0]
-        ],
-        width: 2,
-        height: 3
-      }
-    ],
-    width: 3,
-    height: 3,
+    rotations: [ 0x138, 0xd2, 0x39, 0x96 ],
+    dimensions: 3,
     color: '#0000f0'
   },
   L: {
-    rotations: [
-      {
-        data: [
-          [0, 0, 1],
-          [1, 1, 1],
-          [0, 0, 0]
-        ],
-        width: 3,
-        height: 2
-      },
-      {
-        data: [
-          [0, 1, 0],
-          [0, 1, 0],
-          [0, 1, 1]
-        ],
-        width: 2,
-        height: 3
-      },
-      {
-        data: [
-          [0, 0, 0],
-          [1, 1, 1],
-          [1, 0, 0]
-        ],
-        width: 3,
-        height: 2
-      },
-      {
-        data: [
-          [1, 1, 0],
-          [0, 1, 0],
-          [0, 1, 0]
-        ],
-        width: 2,
-        height: 3
-      }
-    ],
-    width: 3,
-    height: 3,
+    rotations: [ 0x78, 0x93, 0x3c, 0x192 ],
+    dimensions: 3,
     color: '#f0a000'
   },
   O: {
-    rotations: [
-      {
-        data: [
-          [0, 1, 1, 0],
-          [0, 1, 1, 0],
-          [0, 0, 0, 0]
-        ],
-        width: 2,
-        height: 2
-      }
-    ],
-    width: 4,
-    height: 3,
+    rotations: [ 0x660 ],
+    dimensions: 4,
     color: '#f0f000'
   },
   S: {
-    rotations: [
-      {
-        data: [
-          [0, 1, 1],
-          [1, 1, 0],
-          [0, 0, 0]
-        ],
-        width: 3,
-        height: 2
-      },
-      {
-        data: [
-          [0, 1, 0],
-          [0, 1, 1],
-          [0, 0, 1]
-        ],
-        width: 2,
-        height: 3
-      },
-      {
-        data: [
-          [0, 0, 0],
-          [0, 1, 1],
-          [1, 1, 0]
-        ],
-        width: 3,
-        height: 2
-      },
-      {
-        data: [
-          [1, 0, 0],
-          [1, 1, 0],
-          [0, 1, 0]
-        ],
-        width: 2,
-        height: 3
-      }
-    ],
-    width: 3,
-    height: 3,
+    rotations: [ 0xf0, 0x99, 0x1e, 0x132 ],
+    dimensions: 3,
     color: '#00f000'
   },
   T: {
-    rotations: [
-      {
-        data: [
-          [0, 1, 0],
-          [1, 1, 1],
-          [0, 0, 0]
-        ],
-        width: 3,
-        height: 2
-      },
-      {
-        data: [
-          [0, 1, 0],
-          [0, 1, 1],
-          [0, 1, 0]
-        ],
-        width: 2,
-        height: 3
-      },
-      {
-        data: [
-          [0, 0, 0],
-          [1, 1, 1],
-          [0, 1, 0]
-        ],
-        width: 3,
-        height: 2
-      },
-      {
-        data: [
-          [0, 1, 0],
-          [1, 1, 0],
-          [0, 1, 0]
-        ],
-        width: 2,
-        height: 3
-      }
-    ],
-    width: 3,
-    height: 3,
+    rotations: [ 0xb8, 0x9a, 0x3a, 0xb2 ],
+    dimensions: 3,
     color: '#a000f0'
   },
   Z: {
-    rotations: [
-      {
-        data: [
-          [1, 1, 0],
-          [0, 1, 1],
-          [0, 0, 0]
-        ],
-        width: 3,
-        height: 2
-      },
-      {
-        data: [
-          [0, 0, 1],
-          [0, 1, 1],
-          [0, 1, 0]
-        ],
-        width: 2,
-        height: 3
-      },
-      {
-        data: [
-          [0, 0, 0],
-          [1, 1, 0],
-          [0, 1, 1]
-        ],
-        width: 3,
-        height: 2
-      },
-      {
-        data: [
-          [0, 1, 0],
-          [1, 1, 0],
-          [1, 0, 0]
-        ],
-        width: 2,
-        height: 3
-      }
-    ],
-    width: 3,
-    height: 3,
+    rotations: [ 0x198, 0x5a, 0x33, 0xb4 ],
+    dimensions: 3,
     color: '#f00000'
-  },
+  }
 };
+
+var unmaskPiece = function(piece) {
+  var rotations = [];
+  piece.rotations.forEach(function(e) {
+    var rt = [], rw = [];
+    for (var i = Math.pow(piece.dimensions, 2) - 1; i !== -1; i--) {
+      rw.push(+!!(e & (1 << i)));
+      if (rw.length % piece.dimensions === 0) {
+        rt.push(rw);
+        rw = [];
+      }
+    }
+    rotations.push({
+      data: rt,
+      width: Math.max.apply(null, rt.map(function(e) {
+        return e.lastIndexOf(1) - e.indexOf(1) + 1;
+      })),
+      height: rt.filter(function(e) {
+        return e.join('').split('0').join('');
+      }).length
+    });
+  });
+  piece.rotations = rotations;
+};
+
+Object.keys(TetrisPieces).forEach(function(key) {
+  unmaskPiece(TetrisPieces[key]);
+});
 
 var NextPiece = function(canvas, width, height, squareSize) {
   canvas.width = width * squareSize;
@@ -499,7 +286,7 @@ var NextPiece = function(canvas, width, height, squareSize) {
   var nextShape = randomShape();
   return {
     render: function() {
-      context.fillStyle = '#fff';
+      context.fillStyle = '#dfdfdf';
       context.fillRect(0, 0, canvas.width, canvas.height);
       var next = new TetrisShape(nextShape);
       var offsetX = 1;
@@ -525,44 +312,46 @@ var NextPiece = function(canvas, width, height, squareSize) {
 };
 
 var Tetris = function(canvas, rows, columns, squareSize) {
-
-
-  var grid = new TetrisGrid(rows, columns);
-  var activeShape;
-  var score = 0;
-  var totalRowsCleared = 0;
-  var level = 1;
+  var grid = new TetrisGrid(rows, columns),
+      score = 0,
+      totalRowsCleared = 0,
+      level = 1;
 
   var clearPixel,
+      activeShape,
       clearRow,
       randomShape,
       renderShape,
       clearShape,
-      clearRows;
-  var Animation;
+      clearRows,
+      Animation;
 
   canvas.width = columns * squareSize;
   canvas.height = rows * squareSize;
-  var next = new NextPiece(document.getElementById('next-piece'), 6, 5, squareSize);
-  next.left(canvas.offsetLeft + canvas.width);
-  next.top(canvas.offsetTop);
+  var next = new NextPiece(document.getElementById('next-piece'),
+                           6, 5, squareSize),
+      boundingRect = canvas.getBoundingClientRect();
+  next.left(boundingRect.left + canvas.width);
+  next.top(boundingRect.top);
 
-  InfoBox.left(canvas.offsetLeft + canvas.width);
-  InfoBox.top(canvas.offsetTop + 5 * squareSize);
-  InfoBox.setScore(0);
-  InfoBox.setLevel(1);
-  InfoBox.setRowsCleared(0);
+  InfoBox.left(boundingRect.left + canvas.width)
+         .top(boundingRect.top + 5 * squareSize)
+         .setScore(0)
+         .setLevel(1)
+         .setRowsCleared(0);
 
   var context = canvas.getContext('2d');
 
 
-  var backgroundColor = '#1b1d1e';
+  var backgroundColor = '#dfdfdf';
   context.fillStyle = backgroundColor;
   context.fillRect(0, 0, canvas.width, canvas.height);
+
   clearPixel = function(x, y) {
     context.fillStyle = backgroundColor;
     context.fillRect(x * squareSize, y * squareSize, squareSize, squareSize);
   };
+
   clearRow = function(y) {
     context.fillStyle = backgroundColor;
     grid.data[y] = grid.data[y].map(function() { return 0; });
@@ -709,11 +498,13 @@ var Tetris = function(canvas, rows, columns, squareSize) {
       }
     }, 50);
   };
+
   window.addEventListener('keyup', function(event) {
     if (event.which === 40) {
       downHeld = false;
     }
   });
+
   window.addEventListener('keydown', function(event) {
     switch (event.which) {
       case 37: // Left
@@ -748,7 +539,6 @@ var Tetris = function(canvas, rows, columns, squareSize) {
 
   activeShape = grid.dropShape(randomShape());
   Animation.animate();
-
 };
 
 Tetris(document.getElementById('tetris'), HEIGHT, WIDTH, SIZE);

@@ -6,18 +6,23 @@ window.InfoBox = (function() {
   return {
     left: function(n) {
       infoBox.style.left = n + 'px';
+      return this;
     },
     top: function(n) {
       infoBox.style.top = n + 'px';
+      return this;
     },
     setScore: function(n) {
       score.textContent = n;
+      return this;
     },
     setLevel: function(n) {
       level.textContent = n;
+      return this;
     },
     setRowsCleared: function(n) {
       rowsCleared.textContent = n;
+      return this;
     }
   };
 })();
