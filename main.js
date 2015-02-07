@@ -95,7 +95,7 @@ var TetrisGrid = function(rows, columns) {
 
 TetrisGrid.prototype = {
   dropShape: function(shape) {
-    shape.x = ~~(this.width / 2 - shape.dimensions / 2);
+    shape.x = ~~(this.width / 2 - shape.size / 2);
     this.renderShape(this.activeShape = new TetrisShape(shape));
     return this.activeShape;
   },
@@ -114,7 +114,7 @@ TetrisGrid.prototype = {
     }, this);
   },
   hasXConflict: function(shape, dx) {
-    if (shape.x + shape.dimensions === this.width && dx === 1) {
+    if (shape.x + shape.size === this.width && dx === 1) {
       return true;
     }
     var y, x;
@@ -144,7 +144,7 @@ TetrisGrid.prototype = {
     return false;
   },
   hasYConflict: function(shape, dy) {
-    if (shape.y + shape.dimensions === this.height) {
+    if (shape.y + shape.size === this.height) {
       return true;
     }
     for (var y = 0; y < shape.data.length; y++) {
@@ -160,8 +160,8 @@ TetrisGrid.prototype = {
     return false;
   },
   hasRotationConflict: function(shape) {
-    if ((shape.x < 0 || shape.x + shape.dimensions > this.width) ||
-        (shape.y < 0 || shape.y + shape.dimensions > this.height))
+    if ((shape.x < 0 || shape.x + shape.size > this.width) ||
+        (shape.y < 0 || shape.y + shape.size > this.height))
     {
       return true;
     }
@@ -211,37 +211,37 @@ TetrisGrid.prototype = {
 var TetrisPieces = {
   I: {
     rotations: [ 0xf00, 0x2222, 0xf0, 0x4444 ],
-    dimensions: 4,
+    size: 4,
     color: '#00f0f0',
   },
   J: {
     rotations: [ 0x138, 0xd2, 0x39, 0x96 ],
-    dimensions: 3,
+    size: 3,
     color: '#0000f0'
   },
   L: {
     rotations: [ 0x78, 0x93, 0x3c, 0x192 ],
-    dimensions: 3,
+    size: 3,
     color: '#f0a000'
   },
   O: {
     rotations: [ 0x660 ],
-    dimensions: 4,
+    size: 4,
     color: '#f0f000'
   },
   S: {
     rotations: [ 0xf0, 0x99, 0x1e, 0x132 ],
-    dimensions: 3,
+    size: 3,
     color: '#00f000'
   },
   T: {
     rotations: [ 0xb8, 0x9a, 0x3a, 0xb2 ],
-    dimensions: 3,
+    size: 3,
     color: '#a000f0'
   },
   Z: {
     rotations: [ 0x198, 0x5a, 0x33, 0xb4 ],
-    dimensions: 3,
+    size: 3,
     color: '#f00000'
   }
 };
@@ -250,9 +250,9 @@ var unmaskPiece = function(piece) {
   var rotations = [];
   piece.rotations.forEach(function(e) {
     var rt = [], rw = [];
-    for (var i = Math.pow(piece.dimensions, 2) - 1; i !== -1; i--) {
+    for (var i = Math.pow(piece.size, 2) - 1; i !== -1; i--) {
       rw.push(+!!(e & (1 << i)));
-      if (rw.length % piece.dimensions === 0) {
+      if (rw.length % piece.size === 0) {
         rt.push(rw);
         rw = [];
       }
@@ -315,16 +315,10 @@ var Tetris = function(canvas, rows, columns, squareSize) {
   var grid = new TetrisGrid(rows, columns),
       score = 0,
       totalRowsCleared = 0,
-      level = 1;
+      level = 1,
+      gameOver = false;
 
-  var clearPixel,
-      activeShape,
-      clearRow,
-      randomShape,
-      renderShape,
-      clearShape,
-      clearRows,
-      Animation;
+  var activeShape;
 
   canvas.width = columns * squareSize;
   canvas.height = rows * squareSize;
@@ -347,12 +341,12 @@ var Tetris = function(canvas, rows, columns, squareSize) {
   context.fillStyle = backgroundColor;
   context.fillRect(0, 0, canvas.width, canvas.height);
 
-  clearPixel = function(x, y) {
+  var clearPixel = function(x, y) {
     context.fillStyle = backgroundColor;
     context.fillRect(x * squareSize, y * squareSize, squareSize, squareSize);
   };
 
-  clearRow = function(y) {
+  var clearRow = function(y) {
     context.fillStyle = backgroundColor;
     grid.data[y] = grid.data[y].map(function() { return 0; });
     grid.data.unshift(grid.data.splice(y, 1)[0]);
@@ -361,11 +355,19 @@ var Tetris = function(canvas, rows, columns, squareSize) {
     context.putImageData(image, 0, squareSize);
   };
 
-  randomShape = function() {
+  var setHighScore = function() {
+    var highScore = +localStorage.getItem('high-score') | 0;
+    if (score > highScore) {
+      localStorage.setItem('high-score', score);
+    }
+    InfoBox.setHighScore();
+  };
+
+  var randomShape = function() {
     return [next.nextShape(), next.render()][0];
   };
 
-  renderShape = function() {
+  var renderShape = function() {
     activeShape.forEach(function(e, x, y) {
       if (e === 1) {
         putPixel(context, squareSize, x + activeShape.x, y + activeShape.y - 2, activeShape.color);
@@ -373,7 +375,7 @@ var Tetris = function(canvas, rows, columns, squareSize) {
     });
   };
 
-  clearShape = function() {
+  var clearShape = function() {
     activeShape.forEach(function(e, x, y) {
       if (e === 1) {
         clearPixel(x + activeShape.x, y + activeShape.y - 2, activeShape.color);
@@ -381,7 +383,7 @@ var Tetris = function(canvas, rows, columns, squareSize) {
     });
   };
 
-  clearRows = function() {
+  var clearRows = function() {
     var rowsCleared = 0;
     while (true) {
       var hasCleared = false;
@@ -425,7 +427,7 @@ var Tetris = function(canvas, rows, columns, squareSize) {
     }
   };
 
-  Animation = (function() {
+  var Animation = (function() {
     var C = 650;
     var id;
     var left = 0;
@@ -439,6 +441,11 @@ var Tetris = function(canvas, rows, columns, squareSize) {
         if (grid.nextIteration()) {
           renderShape();
           clearRows();
+          if (activeShape.y <= 1) {
+            gameOver = true;
+            setHighScore();
+            return;
+          }
           activeShape = grid.dropShape(randomShape());
           duration = 0;
         } else {
@@ -496,7 +503,7 @@ var Tetris = function(canvas, rows, columns, squareSize) {
       if (downHeld) {
         advanceLoop();
       }
-    }, 50);
+    }, 30);
   };
 
   window.addEventListener('keyup', function(event) {
@@ -506,6 +513,9 @@ var Tetris = function(canvas, rows, columns, squareSize) {
   });
 
   window.addEventListener('keydown', function(event) {
+    if (gameOver) {
+      return;
+    }
     switch (event.which) {
       case 37: // Left
         clearShape();
@@ -537,6 +547,7 @@ var Tetris = function(canvas, rows, columns, squareSize) {
     }
   });
 
+  InfoBox.setHighScore();
   activeShape = grid.dropShape(randomShape());
   Animation.animate();
 };

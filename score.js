@@ -3,6 +3,7 @@ window.InfoBox = (function() {
   var score = document.getElementById('score');
   var level = document.getElementById('level');
   var rowsCleared = document.getElementById('rows-cleared');
+  var highScore = document.getElementById('high-score');
   return {
     left: function(n) {
       infoBox.style.left = n + 'px';
@@ -22,6 +23,10 @@ window.InfoBox = (function() {
     },
     setRowsCleared: function(n) {
       rowsCleared.textContent = n;
+      return this;
+    },
+    setHighScore: function() {
+      highScore.textContent = localStorage.getItem('high-score') | 0;
       return this;
     }
   };
