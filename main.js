@@ -424,6 +424,7 @@ var Tetris = function(canvas, rows, columns, squareSize) {
       }
       InfoBox.setScore(score);
       InfoBox.setRowsCleared(totalRowsCleared);
+      setHighScore();
     }
   };
 
