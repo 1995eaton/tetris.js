@@ -316,7 +316,9 @@ var Tetris = function(canvas, rows, columns, squareSize) {
       score = 0,
       totalRowsCleared = 0,
       level = 1,
-      gameOver = false;
+      gameOver = false,
+      downHeld = false,
+      waitForUp = false;
 
   var activeShape;
 
@@ -385,6 +387,11 @@ var Tetris = function(canvas, rows, columns, squareSize) {
 
   var clearRows = function() {
     var rowsCleared = 0;
+    waitForUp = true;
+    setTimeout(function() {
+      waitForUp = false;
+    }, 500);
+    downHeld = false;
     while (true) {
       var hasCleared = false;
       for (var y = grid.data.length - 1; y !== -1; y--) {
@@ -496,7 +503,6 @@ var Tetris = function(canvas, rows, columns, squareSize) {
     };
   })();
 
-  var downHeld = false;
   var advanceLoop = function() {
     clearShape();
     Animation.reset();
@@ -504,12 +510,13 @@ var Tetris = function(canvas, rows, columns, squareSize) {
       if (downHeld) {
         advanceLoop();
       }
-    }, 30);
+    }, 50);
   };
 
   window.addEventListener('keyup', function(event) {
     if (event.which === 40) {
       downHeld = false;
+      waitForUp = false;
     }
   });
 
@@ -533,7 +540,7 @@ var Tetris = function(canvas, rows, columns, squareSize) {
         Animation.play();
         break;
       case 40: // Down
-        if (!downHeld) {
+        if (!downHeld && !waitForUp) {
           downHeld = true;
           advanceLoop();
         }
